@@ -6,6 +6,11 @@ edition = "2024"
 [dependencies]
 eframe = "0.31.1"
 egui = "0.31.1"
+ron = "0.10.1"
+
+[dependencies.serde]
+version = "1.0.219"
+features = ["derive"]
 
 [dependencies.hyprland]
 git = "https://github.com/hyprland-community/hyprland-rs"

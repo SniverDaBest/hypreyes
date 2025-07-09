@@ -1,13 +1,17 @@
 #![allow(clippy::uninlined_format_args, clippy::needless_return)]
 
 /* TOOD:
- * Configuration
+ * Fix the transparent background
+ * Configuration with Hyprlang instead of ron
  * Make eyes strech when window resizes
  * Make window floating by default (maybe not possible)
  */
 
+mod config;
+
+use config::{Config, get_config};
 use eframe::{App, Frame, NativeOptions, egui::Context};
-use egui::{CentralPanel, Color32, Rect, pos2, vec2};
+use egui::{CentralPanel, Rect, pos2, vec2};
 use hyprland::{
     data::{Clients, CursorPosition},
     shared::HyprData,
@@ -19,15 +23,17 @@ struct HyprEyes {
     cur_y: i64,
     win_x: i16,
     win_y: i16,
+    config: Config,
 }
 
 impl HyprEyes {
-    fn new() -> Self {
+    fn new(config: Config) -> Self {
         return Self {
             cur_x: 0,
             cur_y: 0,
             win_x: 0,
             win_y: 0,
+            config,
         };
     }
 
@@ -50,7 +56,13 @@ impl App for HyprEyes {
         self.update_cur_pos();
         self.update_win_pos();
         ctx.request_repaint();
-        CentralPanel::default().show(ctx, |ui| {
+
+        if self.config.transparent_background {
+            CentralPanel::default().frame(egui::Frame::NONE)
+        } else {
+            CentralPanel::default()
+        }
+        .show(ctx, |ui| {
             let p = ui.painter();
 
             for eye_pos in [pos2(0.0, 0.0), pos2(110.0, 0.0)] {
@@ -72,12 +84,12 @@ impl App for HyprEyes {
                     (0.0, 0.0)
                 };
 
-                p.rect_filled(eye_rect, 50.0, Color32::WHITE);
+                p.rect_filled(eye_rect, 50.0, self.config.color32ify_eye_color());
 
                 p.circle_filled(
                     pos2(center.x + off_x, center.y + off_y),
                     15.0,
-                    Color32::BLACK,
+                    self.config.color32ify_pupil_color(),
                 );
             }
         });
@@ -85,12 +97,6 @@ impl App for HyprEyes {
 }
 
 fn check_for_hyprland() -> Result<(), String> {
-    for arg in env::args() {
-        if arg == "-s" || arg == "--skip" {
-            return Ok(());
-        }
-    }
-
     match env::var("DESKTOP_SESSION").expect("Unable to get desktop session environment variable! Run with the -s or --skip flag to skip this. (if you're using hyprland)").as_str() {
         "hyprland"      => return Ok(()),
         "hyprland-uwsm" => return Ok(()),
@@ -101,13 +107,42 @@ fn check_for_hyprland() -> Result<(), String> {
 }
 
 fn main() -> Result<(), String> {
-    check_for_hyprland()?;
+    let mut def = false;
+    let mut skip = false;
+
+    for arg in env::args() {
+        if arg == "-h" || arg == "--help" {
+            println!("== Help ===============");
+            println!("-h | --help    - Displays this message.");
+            println!("-s | --skip    - Skips the Hyprland check.");
+            println!("-d | --default - Uses the default config.");
+            return Ok(());
+        }
+
+        if arg == "-d" || arg == "--default" {
+            def = true;
+        }
+
+        if arg == "-s" || arg == "--skip" {
+            skip = false;
+        }
+    }
+
+    if !skip {
+        check_for_hyprland()?;
+    }
+
+    let config = if def { Config::default() } else { get_config() };
+
+    if config.transparent_background {
+        eprintln!("Warning: Transparent background is kinda broken!");
+    }
 
     let native_opts = NativeOptions::default();
     eframe::run_native(
         "HyprEyes",
         native_opts,
-        Box::new(|_cc| Ok(Box::new(HyprEyes::new()))),
+        Box::new(|_cc| Ok(Box::new(HyprEyes::new(config)))),
     )
     .expect("Unable to run window!");
 
