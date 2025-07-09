@@ -1,0 +1,12 @@
+[package]
+name = "hypreyes"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = "0.31.1"
+egui = "0.31.1"
+
+[dependencies.hyprland]
+git = "https://github.com/hyprland-community/hyprland-rs"
+branch = "master"
