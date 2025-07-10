@@ -3,7 +3,6 @@
 /* TOOD:
  * Fix the transparent background
  * Configuration with Hyprlang instead of ron
- * Make eyes strech when window resizes
  * Make window floating by default (maybe not possible)
  */
 
@@ -60,35 +59,39 @@ impl App for HyprEyes {
         if self.config.transparent_background {
             CentralPanel::default().frame(egui::Frame::NONE)
         } else {
-            CentralPanel::default()
+            CentralPanel::default().frame(egui::Frame { fill: self.config.color32ify_background_color(), ..egui::Frame::default() })
         }
         .show(ctx, |ui| {
             let p = ui.painter();
+            let size = ui.max_rect().size();
 
-            for eye_pos in [pos2(0.0, 0.0), pos2(110.0, 0.0)] {
-                let eye_rect = Rect::from_min_size(eye_pos, vec2(100.0, 130.0));
-                let center = eye_rect.center();
+            for eye_pos in [
+                pos2(size.x * 0.05, size.y * 0.1),
+                pos2(size.x * 0.55, size.y * 0.1),
+            ] {
+                let eye_rect = Rect::from_min_size(
+                    eye_pos,
+                    vec2(size.x * 0.4, size.y * 0.8),
+                );
 
-                let dist = (((self.cur_x as f32 - self.win_x as f32) - center.x)
-                    * ((self.cur_x as f32 - self.win_x as f32) - center.x)
-                    + ((self.cur_y as f32 - self.win_y as f32) - center.y)
-                        * ((self.cur_y as f32 - self.win_y as f32) - center.y))
-                    .sqrt();
+                let dist = (((self.cur_x as f32 - self.win_x as f32) - eye_rect.center().x) * ((self.cur_x as f32 - self.win_x as f32) - eye_rect.center().x) + ((self.cur_y as f32 - self.win_y as f32) - eye_rect.center().y) * ((self.cur_y as f32 - self.win_y as f32) - eye_rect.center().y)).sqrt();
+
                 let (off_x, off_y) = if dist > 0.0 {
-                    let scale = 30.0f32.min(dist) / dist;
-                    (
-                        ((self.cur_x as f32 - self.win_x as f32) - center.x) * scale,
-                        ((self.cur_y as f32 - self.win_y as f32) - center.y) * scale,
-                    )
+                    let scale = (size.y * 0.16).min(dist) / dist;
+                    (((self.cur_x as f32 - self.win_x as f32) - eye_rect.center().x) * scale, ((self.cur_y as f32 - self.win_y as f32) - eye_rect.center().y) * scale)
                 } else {
                     (0.0, 0.0)
                 };
 
-                p.rect_filled(eye_rect, 50.0, self.config.color32ify_eye_color());
+                p.rect_filled(
+                    eye_rect,
+                    (size.x * 0.4).min(size.y * 0.8) * 0.5,
+                    self.config.color32ify_eye_color(),
+                );
 
                 p.circle_filled(
-                    pos2(center.x + off_x, center.y + off_y),
-                    15.0,
+                    pos2(eye_rect.center().x + off_x, eye_rect.center().y + off_y),
+                    (size.x * 0.4).min(size.y * 0.8) * 0.15,
                     self.config.color32ify_pupil_color(),
                 );
             }

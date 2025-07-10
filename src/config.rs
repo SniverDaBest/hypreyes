@@ -6,6 +6,7 @@ use std::{env, fs::File, io::Read, path::Path};
 pub struct Config {
     pub eye_color: (u8, u8, u8),
     pub pupil_color: (u8, u8, u8),
+    pub background_color: (u8, u8, u8),
     pub transparent_background: bool,
 }
 
@@ -17,6 +18,10 @@ impl Config {
     pub fn color32ify_pupil_color(&self) -> Color32 {
         return Color32::from_rgb(self.pupil_color.0, self.pupil_color.1, self.pupil_color.2);
     }
+
+    pub fn color32ify_background_color(&self) -> Color32 {
+        return Color32::from_rgb(self.background_color.0, self.background_color.1, self.background_color.2);
+    }
 }
 
 impl Default for Config {
@@ -24,6 +29,7 @@ impl Default for Config {
         return Self {
             eye_color: (255, 255, 255),
             pupil_color: (0, 0, 0),
+            background_color: (0, 0, 0),
             transparent_background: false,
         };
     }
