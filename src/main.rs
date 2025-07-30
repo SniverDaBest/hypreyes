@@ -127,7 +127,7 @@ fn main() -> Result<(), String> {
         }
 
         if arg == "-s" || arg == "--skip" {
-            skip = false;
+            skip = true;
         }
     }
 

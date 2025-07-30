@@ -40,7 +40,7 @@ pub fn get_config() -> Config {
 
     let config_path_str = format!(
         "{}/hypreyes/hypreyes.ron",
-        env::var("XDG_CONFIG_HOME").expect("Unable to get XDG_CONFIG_HOME env variable!")
+        env::var("XDG_CONFIG_HOME").unwrap_or("~/.config/".to_string())
     );
     let config_path = Path::new(&config_path_str);
     let mut config_file = match File::open(config_path) {
